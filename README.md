@@ -1,9 +1,19 @@
+---
+title: 使用Redux Toolkit编写现代Redux应用与WebAssembly实战
+date: '2022-08-22'
+tags: ['React', 'Redux', 'Frontend', 'WebAssembly', 'Rust']
+draft: false
+summary: Redux官方推荐的编写方式，Vite下的WebAssembly配置，Rust构建WebAssembly
+images: []
+layout: PostSimple
+canonicalUrl: https://blog-nat5uk1.vercel.app/blog/redux-toolkit-rust-webassembly
+authors: ['default']
+---
+
 ## 目标
 
-1. 使用Redux Toolkit实现一个主题切换功能
-2. 使用Rust编写WebAssembly，通过Vite导入，再用Redux异步获取返回的数据
-
-
+1. 使用 Redux Toolkit 实现一个主题切换功能
+2. 使用 Rust 编写 WebAssembly，通过 Vite 导入，再用 Redux 异步获取返回的数据
 
 ## 实现步骤
 
@@ -23,18 +33,14 @@ pnpm i
 pnpm dev
 ```
 
-
-
 #### 依赖安装
 
 ```shell
 pnpm i @reduxjs/toolkit react-redux
 ```
 
-+ @reduxjs/toolkit：redux官方工具包，不需要再安装`redux` `redux-thunk` `redux-devtools-extension`等
-+ react-redux：由于redux核心库适用于所有js框架，所以需要`react-redux`建立与react应用的联系
-
-
+- @reduxjs/toolkit：redux 官方工具包，不需要再安装`redux` `redux-thunk` `redux-devtools-extension`等
+- react-redux：由于 redux 核心库适用于所有 js 框架，所以需要`react-redux`建立与 react 应用的联系
 
 #### 修改模板代码
 
@@ -49,25 +55,21 @@ pnpm i @reduxjs/toolkit react-redux
 }
 ```
 
-------
+---
 
 `src/App.jsx`
 
-```react
-import "./App.css"
+```js
+import './App.css'
 
 function App() {
-  return (
-    <div className="App">
-
-    </div>
-  )
+  return <div className="App"></div>
 }
 
 export default App
 ```
 
-------
+---
 
 `src/App.css`
 
@@ -78,19 +80,15 @@ export default App
 }
 ```
 
-
-
-#### 创建store
+#### 创建 store
 
 `src/store.js`
 
 ```javascript
-import { configureStore } from "@reduxjs/toolkit"
+import { configureStore } from '@reduxjs/toolkit'
 
 const store = configureStore({
-  reducer: {
-    
-  },
+  reducer: {},
 })
 
 export default store
@@ -98,29 +96,27 @@ export default store
 
 此处的`configureStore`做了以下工作：
 
-+ 组合所有reducers，构建 root reducer，即传统写法中`combineReducers`的功能
-+ 使用root reducer创建Redux store
-+ 添加`thunk`中间件支持异步，即传统写法`redux-thunk`的功能
-+ 添加错误提醒中间件
-+ 建立与浏览器插件的连接，即传统写法`redux-devtools-extension`的功能
+- 组合所有 reducers，构建 root reducer，即传统写法中`combineReducers`的功能
+- 使用 root reducer 创建 Redux store
+- 添加`thunk`中间件支持异步，即传统写法`redux-thunk`的功能
+- 添加错误提醒中间件
+- 建立与浏览器插件的连接，即传统写法`redux-devtools-extension`的功能
 
-
-
-#### 创建slice
+#### 创建 slice
 
 `src/features/themeSlice.js`
 
 ```javascript
-import { createSlice } from "@reduxjs/toolkit"
+import { createSlice } from '@reduxjs/toolkit'
 
 const initialState = {
-  background: "#261D1E",
-  foreground: "#F5E6C4",
-  primaryColor: "#F64404",
+  background: '#261D1E',
+  foreground: '#F5E6C4',
+  primary: '#F64404',
 }
 
 const themeSlice = createSlice({
-  name: "theme",
+  name: 'theme',
   initialState,
   reducers: {
     themeChanged: {
@@ -128,7 +124,7 @@ const themeSlice = createSlice({
         for (let i of Reflect.ownKeys(state)) {
           state[i] = action.payload[i]
         }
-      }
+      },
     },
   },
 })
@@ -136,57 +132,50 @@ const themeSlice = createSlice({
 export const { themeChanged } = themeSlice.actions
 
 export default themeSlice.reducer
-
 ```
 
 此处的`createSlice`做了以下工作：
 
-+ 命名slice空间，相当于传统Redux action type`todos/added`中的`todos`
-+ 传入初始状态`initialState`
-+ 根据`reducers`下的属性名创建action函数，该函数返回一个action对象，此处`themeChanged`即是action函数
-+ 创建reducer
-
-
+- 命名 slice 空间，相当于传统 Redux action type`todos/added`中的`todos`
+- 传入初始状态`initialState`
+- 根据`reducers`下的属性名创建 action 函数，该函数返回一个 action 对象，此处`themeChanged`即是 action 函数
+- 创建 reducer
 
 注意点：
 
-1. 传统Redux中是不能直接为state赋值的，state是不可变的，需要返回一个copy对象，但在Redux Toolkit中使用了`Immer`，这是react官方推荐的库，可以直接从***写法上***变为直接赋值，`Immer`内部会帮我们做copy
-2. 由于reducer中的state是Proxy对象，不能对state直接赋值，如`state = action.payload`，这样会使redux无法工作
-3. 不需要手动返回一个state，Redux Toolkit会监听state的变化，并发布给所有订阅者
+1. 传统 Redux 中是不能直接为 state 赋值的，state 是不可变的，需要返回一个 copy 对象，但在 Redux Toolkit 中使用了`Immer`，这是 react 官方推荐的库，可以直接从**_写法上_**变为直接赋值，`Immer`内部会帮我们做 copy
+2. 由于 reducer 中的 state 是 Proxy 对象，不能对 state 直接赋值，如`state = action.payload`，这样会使 redux 无法工作
+3. 不需要手动返回一个 state，Redux Toolkit 会监听 state 的变化，并发布给所有订阅者
 
-
-
-#### 创建Card组件
+#### 创建 Card 组件
 
 `src/components/Card.jsx`
 
-```react
-import { useSelector } from "react-redux"
+```js
+import { useSelector } from 'react-redux'
 
 export default () => {
-  const { background, foreground, primaryColor } = useSelector(
-    (state) => state.theme
-  )
+  const { background, foreground, primary } = useSelector((state) => state.theme)
 
   return (
     <div
       style={{
         backgroundColor: background,
-        width: "50%",
-        height: "50%",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
+        width: '50%',
+        height: '50%',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
       }}
     >
       <button
         style={{
           backgroundColor: foreground,
-          color: primaryColor,
+          color: primary,
           borderColor: foreground,
-          fontSize: "2rem",
-          lineHeight: "2.5rem",
-          padding: "10px",
+          fontSize: '2rem',
+          lineHeight: '2.5rem',
+          padding: '10px',
         }}
       >
         Change Theme
@@ -196,15 +185,13 @@ export default () => {
 }
 ```
 
-
-
-#### 添加Card组件到App
+#### 添加 Card 组件到 App
 
 `src/App.jsx`
 
-```react
-import "./App.css"
-import Card from "./components/Card"
+```js
+import './App.css'
+import Card from './components/Card'
 
 function App() {
   return (
@@ -217,15 +204,13 @@ function App() {
 export default App
 ```
 
-
-
-#### 添加reducer到store
+#### 添加 reducer 到 store
 
 `src/store.js`
 
 ```js
-import { configureStore } from "@reduxjs/toolkit"
-import theme from "./features/themeSlice"
+import { configureStore } from '@reduxjs/toolkit'
+import theme from './features/themeSlice'
 
 const store = configureStore({
   reducer: {
@@ -238,21 +223,19 @@ export default store
 
 此处重命名状态为`theme`，可以通过`useSelector((state) => state.theme)`取值
 
-
-
-#### 将store作为Provider的属性传递
+#### 将 store 作为 Provider 的属性传递
 
 `src/main.jsx`
 
-```react
-import React from "react"
-import ReactDOM from "react-dom/client"
-import { Provider } from "react-redux"
-import store from "./store"
-import App from "./App"
-import "./index.css"
+```js
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import { Provider } from 'react-redux'
+import store from './store'
+import App from './App'
+import './index.css'
 
-ReactDOM.createRoot(document.getElementById("root")).render(
+ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <Provider store={store}>
       <App />
@@ -261,29 +244,25 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 )
 ```
 
-此时应该可以看到Card组件的默认样式
-
-
+此时应该可以看到 Card 组件的默认样式
 
 #### 触发更改主题
 
 `src/components/Card.jsx`
 
-```react
-import { useSelector, useDispatch } from "react-redux"
-import { themeChanged } from "../features/themeSlice.js"
+```js
+import { useSelector, useDispatch } from 'react-redux'
+import { themeChanged } from '../features/themeSlice.js'
 
 const fakeTheme = {
-  background: "#F7F6DC",
-  foreground: "#B1D7B4",
-  primaryColor: "#7FB77E",
+  background: '#F7F6DC',
+  foreground: '#B1D7B4',
+  primary: '#7FB77E',
 }
 
 export default () => {
   const dispatch = useDispatch()
-  const { background, foreground, primaryColor } = useSelector(
-    (state) => state.theme
-  )
+  const { background, foreground, primary } = useSelector((state) => state.theme)
 
   const handleClick = () => {
     dispatch(themeChanged(fakeTheme))
@@ -293,20 +272,20 @@ export default () => {
     <div
       style={{
         backgroundColor: background,
-        width: "100%",
-        height: "100%",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
       }}
     >
       <button
         style={{
           backgroundColor: foreground,
-          color: primaryColor,
-          fontSize: "2rem",
-          lineHeight: "2.5rem",
-          padding: "10px",
+          color: primary,
+          fontSize: '2rem',
+          lineHeight: '2.5rem',
+          padding: '10px',
         }}
         onClick={handleClick}
       >
@@ -317,7 +296,7 @@ export default () => {
 }
 ```
 
-使用`useDispatch`获取dispatch方法，`themeSlice`创建的`themeChanged`函数返回一个action对象作为dispatch方法的参数，此处的action对象为：
+使用`useDispatch`获取 dispatch 方法，`themeSlice`创建的`themeChanged`函数返回一个 action 对象作为 dispatch 方法的参数，此处的 action 对象为：
 
 ```js
 {
@@ -325,28 +304,24 @@ export default () => {
     "payload": {
         "background": "#F7F6DC",
         "foreground": "#B1D7B4",
-        "primaryColor": "#7FB77E"
+        "primary": "#7FB77E"
     }
 }
 ```
 
-可以看到，`type`属性的值为`themeSlice`的`name`属性值`theme`和reducer名（也与action函数同名）`themeChanged`组合而成。
+可以看到，`type`属性的值为`themeSlice`的`name`属性值`theme`和 reducer 名（也与 action 函数同名）`themeChanged`组合而成。
 
-再加上点击事件就完成了基本的Redux流程，第一目标Done！
-
-
+再加上点击事件就完成了基本的 Redux 流程，第一目标 Done！
 
 ### 第二目标实现
 
-#### 安装wasm-pack
+#### 安装 wasm-pack
 
 ```shell
 cargo install wasm-pack wasm-bindgen-cli
 ```
 
-
-
-#### 使用wasm-pack创建模板项目
+#### 使用 wasm-pack 创建模板项目
 
 ```shell
 wasm-pack new color-changer
@@ -365,8 +340,6 @@ wasm-pack new color-changer
    ```shell
    cargo generate --git https://github.com/rustwasm/wasm-pack-template --name color-changer
    ```
-
-
 
 #### 修改模板代码
 
@@ -403,11 +376,9 @@ opt-level = "s"
 wasm-opt = false
 ```
 
-------
+---
 
 删除`color-changer/src/utils.rs`
-
-
 
 #### 编写功能函数
 
@@ -473,21 +444,17 @@ pub fn color_random() -> JsValue {
 }
 ```
 
-在WebAssembly中，无法将复杂类型映射到JavaScript，如果函数的返回值是一个结构体，那么你在前端将会得到形如`MyStruct{ptr:12345678}`的对象。解决方案是通过Serde将结构体类型的值序列化后，返回`JsValue`即可。
+在 WebAssembly 中，无法将复杂类型映射到 JavaScript，如果函数的返回值是一个结构体，那么你在前端将会得到形如`MyStruct{ptr:12345678}`的对象。解决方案是通过 Serde 将结构体类型的值序列化后，返回`JsValue`即可。
 
-
-
-#### 编译wasm
+#### 编译 wasm
 
 ```shell
 wasm-pack build
 ```
 
-构建完毕后在`color-changer/pkg/`目录下可以找到构建结果，构建产物是一个缺失部分属性的Npm包
+构建完毕后在`color-changer/pkg/`目录下可以找到构建结果，构建产物是一个缺失部分属性的 Npm 包
 
-
-
-#### 配置Vite使项目可以通过ESM的方式引入WebAssembly
+#### 配置 Vite 使项目可以通过 ESM 的方式引入 WebAssembly
 
 ```shell
 pnpm i -D vite-plugin-wasm@^2
@@ -496,21 +463,19 @@ pnpm i -D vite-plugin-wasm@^2
 `vite.config.js`
 
 ```js
-import { defineConfig } from "vite"
-import react from "@vitejs/plugin-react"
-import wasm from "vite-plugin-wasm";
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import wasm from 'vite-plugin-wasm'
 
 export default defineConfig({
-  plugins: [wasm(),react()],
+  plugins: [wasm(), react()],
   build: {
-    target: "esnext",
+    target: 'esnext',
   },
 })
 ```
 
-
-
-#### 前端模拟API
+#### 前端模拟 API
 
 ```shell
 cd ..
@@ -519,7 +484,7 @@ cd ..
 `src/api/index.js`
 
 ```js
-import { color_random as colorRandom } from "../../color-changer/pkg"
+import { color_random as colorRandom } from '../../color-changer/pkg'
 
 export const asyncColorRandom = () => {
   return new Promise((resolve) => {
@@ -527,21 +492,19 @@ export const asyncColorRandom = () => {
   })
 }
 
-export { color_random as colorRandom } from "../../color-changer/pkg"
+export { color_random as colorRandom } from '../../color-changer/pkg'
 ```
 
-
-
-#### 为slice添加异步Action与Reducer
+#### 为 slice 添加异步 Action 与 Reducer
 
 `src/features/themeSlice.js`
 
 ```js
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit"
-import { colorRandom, asyncColorRandom } from "../api/index"
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import { colorRandom, asyncColorRandom } from '../api/index'
 
 const themeSlice = createSlice({
-  name: "theme",
+  name: 'theme',
   initialState: colorRandom(),
   reducers: {
     themeChanged: {
@@ -561,35 +524,27 @@ const themeSlice = createSlice({
   },
 })
 
-export const getRandomColor = createAsyncThunk(
-  "theme/getRandomColor",
-  async () => {
-    const response = await asyncColorRandom()
-    return response
-  }
-)
+export const getRandomColor = createAsyncThunk('theme/getRandomColor', async () => {
+  const response = await asyncColorRandom()
+  return response
+})
 
 export const { themeChanged } = themeSlice.actions
 
 export default themeSlice.reducer
 ```
 
-
-
-#### 修改组件派发异步Action
+#### 修改组件派发异步 Action
 
 `src/components/Card.jsx`
 
-```react
-import { useSelector, useDispatch } from "react-redux"
-import { getRandomColor } from "../features/themeSlice.js"
-
+```js
+import { useSelector, useDispatch } from 'react-redux'
+import { getRandomColor } from '../features/themeSlice.js'
 
 export default () => {
   const dispatch = useDispatch()
-  const { background, foreground, primary } = useSelector(
-    (state) => state.theme
-  )
+  const { background, foreground, primary } = useSelector((state) => state.theme)
 
   const handleClick = () => {
     dispatch(getRandomColor())
@@ -599,11 +554,11 @@ export default () => {
     <div
       style={{
         backgroundColor: background,
-        width: "100%",
-        height: "100%",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
       }}
     >
       <button
@@ -611,9 +566,9 @@ export default () => {
           backgroundColor: foreground,
           color: primary,
           borderColor: foreground,
-          fontSize: "2rem",
-          lineHeight: "2.5rem",
-          padding: "10px",
+          fontSize: '2rem',
+          lineHeight: '2.5rem',
+          padding: '10px',
         }}
         onClick={handleClick}
       >
@@ -623,7 +578,5 @@ export default () => {
   )
 }
 ```
-
-
 
 到此，第二目标完成！快使用`pnpm dev`试试吧！
